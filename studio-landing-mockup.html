@@ -73,7 +73,7 @@
   .track-cover-play:hover { filter: brightness(1.15); }
   .author-badge { position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .author-tooltip {
-    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px);
+    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(calc(-50% + var(--tooltip-shift, 0px))) translateY(4px);
     background: var(--bg-elevated-2); color: var(--text); border: 1px solid var(--border-soft);
     border-radius: 8px; padding: 9px 13px; font-size: 12.5px; font-weight: 500; letter-spacing: normal;
     text-transform: none; line-height: 1.4; white-space: normal; width: max-content; max-width: 200px;
@@ -81,11 +81,11 @@
     transition: opacity .15s ease, transform .15s ease;
   }
   .author-tooltip::after {
-    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    content: ''; position: absolute; top: 100%; left: calc(50% - var(--tooltip-shift, 0px)); transform: translateX(-50%);
     border: 5px solid transparent; border-top-color: var(--bg-elevated-2);
   }
   .author-badge:hover .author-tooltip, .author-badge.is-open .author-tooltip {
-    opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); pointer-events: auto;
+    opacity: 1; visibility: visible; transform: translateX(calc(-50% + var(--tooltip-shift, 0px))) translateY(0); pointer-events: auto;
   }
   .team-photo-card { transition: border-color .15s ease; background-size: cover; background-position: center; }
   .team-photo-card:hover { border-color: var(--accent); }
@@ -136,6 +136,11 @@
       scroll-snap-align: start;
     }
   }
+
+  @media (max-width: 340px) {
+    .brand-logo { height: 32px; }
+    #nav-cta { padding: 7px 12px !important; font-size: 12px !important; }
+  }
 </style>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap">
@@ -154,7 +159,7 @@
         <a class="nav-link" href="#pricing">Цены</a>
         <a class="nav-link" href="#contacts">Контакты</a>
       </div>
-      <a href="#contacts" class="btn-primary" style="background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 8px;">Написать нам</a>
+      <a href="#contacts" id="nav-cta" class="btn-primary" style="background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 8px;">Написать нам</a>
     </div>
   </div>
 
@@ -687,12 +692,31 @@
     audio.addEventListener('ended', stopCurrent);
   });
 
+  function positionAuthorTooltip(badge) {
+    const tooltip = badge.querySelector('.author-tooltip');
+    if (!tooltip) return;
+    const margin = 10;
+    const badgeRect = badge.getBoundingClientRect();
+    const badgeCenter = badgeRect.left + badgeRect.width / 2;
+    const tooltipWidth = tooltip.offsetWidth;
+    const naturalLeft = badgeCenter - tooltipWidth / 2;
+    const naturalRight = badgeCenter + tooltipWidth / 2;
+    let shift = 0;
+    if (naturalLeft < margin) shift = margin - naturalLeft;
+    else if (naturalRight > window.innerWidth - margin) shift = (window.innerWidth - margin) - naturalRight;
+    tooltip.style.setProperty('--tooltip-shift', shift + 'px');
+  }
+
   document.querySelectorAll('.author-badge').forEach(function (badge) {
+    badge.addEventListener('mouseenter', function () { positionAuthorTooltip(badge); });
     badge.addEventListener('click', function (e) {
       e.stopPropagation();
       const wasOpen = badge.classList.contains('is-open');
       document.querySelectorAll('.author-badge.is-open').forEach(function (b) { b.classList.remove('is-open'); });
-      if (!wasOpen) badge.classList.add('is-open');
+      if (!wasOpen) {
+        positionAuthorTooltip(badge);
+        badge.classList.add('is-open');
+      }
     });
     badge.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
