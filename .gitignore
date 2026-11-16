@@ -22,3 +22,9 @@ canvas.json
 
 # Локальные настройки сессии
 .claude/
+
+# Служебные файлы инструкций для AI-агентов и заметки
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+TO DO.txt
